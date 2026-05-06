@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMHI Traiteur — Confirmation de présence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: #0b1a15;
+      color: #dae4e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: rgba(18, 43, 34, 0.85);
+      border: 1px solid rgba(4, 84, 60, 0.3);
+      border-radius: 24px;
+      box-shadow: 0 0 40px rgba(4, 84, 60, 0.2), 0 8px 32px rgba(0,0,0,0.4);
+      max-width: 460px;
+      width: 100%;
+      padding: 36px 32px;
+      backdrop-filter: blur(24px);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, #04543C, #06755a);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon .material-icons-round { color: white; font-size: 20px; }
+    .logo-text { font-size: 16px; font-weight: 600; color: #dae4e0; }
+    .logo-sub { font-size: 11px; color: #8fa89f; }
+    .event-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, #04543C, #06755a);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 0 24px rgba(4, 84, 60, 0.4);
+    }
+    .event-icon .material-icons-round { color: white; font-size: 32px; }
+    h1 { font-size: 22px; font-weight: 700; color: #dae4e0; text-align: center; margin-bottom: 6px; }
+    .subtitle { font-size: 13px; color: #8fa89f; text-align: center; margin-bottom: 24px; }
+    .info-grid { display: grid; gap: 10px; margin-bottom: 28px; }
+    .info-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      background: rgba(4, 84, 60, 0.1);
+      border: 1px solid rgba(4, 84, 60, 0.15);
+      border-radius: 12px;
+    }
+    .info-row .material-icons-round { color: #06755a; font-size: 18px; flex-shrink: 0; }
+    .info-label { font-size: 10px; color: #8fa89f; text-transform: uppercase; letter-spacing: 0.05em; }
+    .info-value { font-size: 14px; color: #dae4e0; font-weight: 500; }
+    .member-name {
+      text-align: center;
+      padding: 12px;
+      background: rgba(4, 84, 60, 0.08);
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    .member-name .label { font-size: 11px; color: #8fa89f; margin-bottom: 4px; }
+    .member-name .name { font-size: 18px; font-weight: 600; color: #06755a; }
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .btn {
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      font-family: 'Lora', Georgia, serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-confirm {
+      background: linear-gradient(135deg, #04543C, #06755a);
+      color: white;
+      box-shadow: 0 4px 16px rgba(4, 84, 60, 0.3);
+    }
+    .btn-confirm:hover { background: linear-gradient(135deg, #06755a, #04543C); }
+    .btn-decline {
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .btn-decline:hover { background: rgba(239, 68, 68, 0.15); }
+    .status-block {
+      text-align: center;
+      padding: 28px 20px;
+    }
+    .status-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 32px;
+    }
+    .status-icon.confirmed { background: rgba(4, 84, 60, 0.2); }
+    .status-icon.declined { background: rgba(239, 68, 68, 0.1); }
+    .status-icon.confirmed .material-icons-round { color: #06755a; font-size: 36px; }
+    .status-icon.declined .material-icons-round { color: #f87171; font-size: 36px; }
+    .status-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .status-title.confirmed { color: #34d399; }
+    .status-title.declined { color: #f87171; }
+    .status-sub { font-size: 13px; color: #8fa89f; line-height: 1.6; }
+    .error-block {
+      text-align: center; padding: 32px 20px;
+    }
+    .error-icon { font-size: 48px; margin-bottom: 12px; }
+    .error-title { font-size: 18px; font-weight: 600; color: #f87171; margin-bottom: 8px; }
+    .error-sub { font-size: 13px; color: #8fa89f; }
+    .loading { text-align: center; padding: 40px; }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(4, 84, 60, 0.2);
+      border-top-color: #06755a;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: #8fa89f; font-size: 14px; }
+    .footer { text-align: center; font-size: 11px; color: #5a7a6f; margin-top: 20px; }
+    .divider { height: 1px; background: rgba(4, 84, 60, 0.2); margin: 20px 0; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon"><span class="material-icons-round">restaurant</span></div>
+    <div>
+      <div class="logo-text">IMHI Traiteur</div>
+      <div class="logo-sub">Confirmation de participation</div>
+    </div>
+  </div>
+
+  <div id="app">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Chargement de l'invitation…</div>
+    </div>
+  </div>
+
+  <div class="footer">IMHI Traiteur © 2026 — Ce lien est personnel et unique</div>
+</div>
+
+<script>
+  // ═══════════════════════════════════════════════════
+  // FIREBASE CONFIG — doit correspondre à index.html
+  // ═══════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey: "VOTRE_API_KEY",
+    authDomain: "VOTRE_PROJET.firebaseapp.com",
+    databaseURL: "https://VOTRE_PROJET-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "VOTRE_PROJET",
+    storageBucket: "VOTRE_PROJET.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123:web:abc123"
+  };
+
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('event');
+  const membreId = params.get('membre');
+  const type = params.get('type') || 'event'; // 'event' or 'session'
+  const app$ = document.getElementById('app');
+
+  function showError(msg) {
+    app$.innerHTML = `
+      <div class="error-block">
+        <div class="error-icon">🔗</div>
+        <div class="error-title">Lien invalide</div>
+        <div class="error-sub">${msg}</div>
+      </div>`;
+  }
+
+  function showStatus(type, name) {
+    const isConfirm = type === 'confirmed';
+    app$.innerHTML = `
+      <div class="status-block">
+        <div class="status-icon ${type}">
+          <span class="material-icons-round">${isConfirm ? 'check_circle' : 'cancel'}</span>
+        </div>
+        <div class="status-title ${type}">${isConfirm ? 'Présence confirmée !' : 'Absence enregistrée'}</div>
+        <div class="status-sub">${isConfirm
+          ? `Merci ${name}, ta participation a bien été enregistrée. Tu recevras les informations pratiques bientôt.`
+          : `Ta réponse a été prise en compte. Tu peux fermer cette page.`
+        }</div>
+      </div>`;
+  }
+
+  function renderCard(eventData, membreData) {
+    const isEvent = type === 'event';
+    const icon = isEvent ? 'celebration' : 'restaurant';
+    const dateStr = eventData.date
+      ? new Date(eventData.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      : 'Date à confirmer';
+
+    const currentStatus = (eventData.rsvp || {})[membreId];
+    if (currentStatus === 'confirmed') { showStatus('confirmed', membreData.prenom || membreData.nom); return; }
+    if (currentStatus === 'declined') { showStatus('declined', membreData.prenom || membreData.nom); return; }
+
+    app$.innerHTML = `
+      <div class="event-icon"><span class="material-icons-round">${icon}</span></div>
+      <h1>${eventData.nom || 'Événement IMHI'}</h1>
+      <p class="subtitle">Tu es invité·e à participer à cet événement</p>
+      <div class="member-name">
+        <div class="label">Invitation pour</div>
+        <div class="name">${(membreData.prenom || '') + ' ' + (membreData.nom || '')}</div>
+      </div>
+      <div class="info-grid">
+        <div class="info-row">
+          <span class="material-icons-round">calendar_today</span>
+          <div><div class="label">Date</div><div class="info-value">${dateStr}</div></div>
+        </div>
+        ${eventData.pax ? `<div class="info-row">
+          <span class="material-icons-round">group</span>
+          <div><div class="label">Invités</div><div class="info-value">${eventData.pax} personnes</div></div>
+        </div>` : ''}
+        ${eventData.lieu ? `<div class="info-row">
+          <span class="material-icons-round">place</span>
+          <div><div class="label">Lieu</div><div class="info-value">${eventData.lieu}</div></div>
+        </div>` : ''}
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-confirm" onclick="rsvp('confirmed')">
+          <span class="material-icons-round" style="font-size:18px">check_circle</span> Je participe
+        </button>
+        <button class="btn btn-decline" onclick="rsvp('declined')">
+          <span class="material-icons-round" style="font-size:18px">cancel</span> Je décline
+        </button>
+      </div>
+      <div class="divider"></div>`;
+  }
+
+  async function rsvp(status) {
+    try {
+      const path = type === 'session' ? 'sessions' : 'events';
+      await firebase.database().ref(`${path}/${eventId}/rsvp/${membreId}`).set(status);
+      const membreSnap = await firebase.database().ref(`membres/${membreId}`).once('value');
+      const m = membreSnap.val() || {};
+      showStatus(status, m.prenom || m.nom || 'Membre');
+    } catch(e) {
+      showError('Une erreur est survenue lors de l\'enregistrement. Réessaie.');
+    }
+  }
+
+  async function init() {
+    if (!eventId || !membreId) { showError('Paramètres manquants dans le lien.'); return; }
+
+    const fbReady = !firebaseConfig.apiKey.startsWith('VOTRE');
+    if (!fbReady) {
+      showError('Firebase n\'est pas encore configuré. Contactez l\'administrateur.');
+      return;
+    }
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch(e) { /* already initialized */ }
+
+    try {
+      const path = type === 'session' ? 'sessions' : 'events';
+      const [evSnap, memSnap] = await Promise.all([
+        firebase.database().ref(`${path}/${eventId}`).once('value'),
+        firebase.database().ref(`membres/${membreId}`).once('value')
+      ]);
+      const evData = evSnap.val();
+      const memData = memSnap.val();
+      if (!evData) { showError('Cet événement n\'existe pas ou a été supprimé.'); return; }
+      if (!memData) { showError('Ce membre est introuvable.'); return; }
+      renderCard(evData, memData);
+    } catch(e) {
+      showError('Erreur de connexion à la base de données.');
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
