@@ -715,10 +715,10 @@ All intellectual property rights reserved.
       const handleForgotPin = () => {
         const phone = DB.getSetting('admin_phone', '');
         if (!phone) {
-           alert('Le numéro WhatsApp du président n\\'est pas configuré dans les Paramètres. Demandez-lui directement !');
+           alert("Le numéro WhatsApp du président n'est pas configuré dans les Paramètres. Demandez-lui directement !");
            return;
         }
-        const text = encodeURIComponent('Salut, j\\'ai oublié le code PIN IMHI Traiteur. Tu pourrais me le renvoyer ?');
+        const text = encodeURIComponent("Salut, j'ai oublié le code PIN IMHI Traiteur. Tu pourrais me le renvoyer ?");
         const a = document.createElement('a');
         a.href = 'https://wa.me/' + phone.replace(/[^0-9+]/g, '') + '?text=' + text;
         a.target = '_blank';
