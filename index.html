@@ -712,10 +712,21 @@ All intellectual property rights reserved.
     // ═══════ PIN MODAL BODY ═══════
     function PinModal({ onConfirm, onCancel }) {
       const [code, setCode] = useState('');
+      const handleForgotPin = () => {
+        const pin = DB.getSetting('admin_pin', '1234');
+        const subject = encodeURIComponent('Récupération du PIN IMHI Traiteur');
+        const body = encodeURIComponent('Bonjour,\n\nLe code PIN actuel est : ' + pin + '\n\nCordialement.');
+        const a = document.createElement('a');
+        a.href = 'mailto:imhitraiteur@gmail.com?subject=' + subject + '&body=' + body;
+        a.click();
+      };
       return html`<div>
         <p class="text-sm text-muted mb-4">Entrez votre code PIN pour modifier cet événement.</p>
         <input type="password" inputmode="numeric" maxlength="8" placeholder="Code PIN" value=${code} onInput=${e => setCode(e.target.value)}
-          onKeyDown=${e => { if (e.key === 'Enter') onConfirm(code); }} class="mb-4 text-center text-xl tracking-widest" />
+          onKeyDown=${e => { if (e.key === 'Enter') onConfirm(code); }} class="mb-2 text-center text-xl tracking-widest" />
+        <div class="text-center mb-4">
+          <button onClick=${handleForgotPin} class="text-xs text-primary-light hover:underline transition-colors">PIN oublié ?</button>
+        </div>
         <div class="flex gap-3">
           <button onClick=${onCancel} class="flex-1 py-3 rounded-xl bg-white/10 text-secondary text-sm font-medium">Annuler</button>
           <button onClick=${() => onConfirm(code)} class="flex-1 py-3 rounded-xl gradient-btn text-white text-sm font-semibold">Confirmer</button>
@@ -1589,7 +1600,13 @@ All intellectual property rights reserved.
         setForm(emptyForm); setShowForm(false); setEdit(null);
       };
       const closeForm = () => { setShowForm(false); setEdit(null); setForm(emptyForm); };
-      const startEdit = (a) => { setForm({ fournisseur: a.fournisseur || '', montant_ttc: a.montant_ttc?.toString() || '', event_id: a.event_id || '', lignes: a.lignes || [], notes: a.notes || '' }); setEdit(a); setShowForm(true); };
+      const startEdit = (a) => {
+        const isAutre = a.fournisseur && !FOURNISSEURS.includes(a.fournisseur);
+        setFournisseurAutre(isAutre);
+        setForm({ fournisseur: a.fournisseur || '', montant_ttc: a.montant_ttc?.toString() || '', event_id: a.event_id || '', lignes: a.lignes || [], notes: a.notes || '' });
+        setEdit(a);
+        setShowForm(true);
+      };
       const executeDelAchat = () => { if (!achatToDelete) return; DB.deleteAchat(achatToDelete); setAchatToDelete(null); setDetail(null); toast('Achat supprimé', 'success'); };
 
       const addLigne = () => {
