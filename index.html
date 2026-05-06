@@ -713,11 +713,15 @@ All intellectual property rights reserved.
     function PinModal({ onConfirm, onCancel }) {
       const [code, setCode] = useState('');
       const handleForgotPin = () => {
-        const pin = DB.getSetting('admin_pin', '1234');
-        const subject = encodeURIComponent('Récupération du PIN IMHI Traiteur');
-        const body = encodeURIComponent('Bonjour,\n\nLe code PIN actuel est : ' + pin + '\n\nCordialement.');
+        const phone = DB.getSetting('admin_phone', '');
+        if (!phone) {
+           alert('Le numéro WhatsApp du président n\\'est pas configuré dans les Paramètres. Demandez-lui directement !');
+           return;
+        }
+        const text = encodeURIComponent('Salut, j\\'ai oublié le code PIN IMHI Traiteur. Tu pourrais me le renvoyer ?');
         const a = document.createElement('a');
-        a.href = 'mailto:imhitraiteur@gmail.com?subject=' + subject + '&body=' + body;
+        a.href = 'https://wa.me/' + phone.replace(/[^0-9+]/g, '') + '?text=' + text;
+        a.target = '_blank';
         a.click();
       };
       return html`<div>
@@ -2838,11 +2842,13 @@ All intellectual property rights reserved.
     function SettingsTab({ toast }) {
       const [pin, setPin] = useState(() => DB.getSetting('admin_pin', '1234'));
       const [email, setEmail] = useState(() => DB.getSetting('admin_email', ''));
+      const [phone, setPhone] = useState(() => DB.getSetting('admin_phone', ''));
       
       const save = () => {
         if(!pin || pin.length < 4) return toast('Le code PIN doit faire au moins 4 caractères', 'error');
         DB.setSetting('admin_pin', pin);
         DB.setSetting('admin_email', email);
+        DB.setSetting('admin_phone', phone);
         toast('Paramètres de sécurité mis à jour', 'success');
       };
 
@@ -2853,6 +2859,7 @@ All intellectual property rights reserved.
           
           <${Field} label="Nouveau Code PIN Administrateur" placeholder="Ex: 1234" type="password" value=${pin} onInput=${e => setPin(e.target.value)} />
           <${Field} label="Email de secours (Optionnel)" placeholder="admin@imhi.fr" type="email" value=${email} onInput=${e => setEmail(e.target.value)} />
+          <${Field} label="Numéro WhatsApp du Président (Optionnel)" placeholder="+33612345678" type="tel" value=${phone} onInput=${e => setPhone(e.target.value)} />
           
           <button onClick=${save} class="w-full mt-4 py-4 rounded-xl gradient-btn text-white font-bold tracking-wide active:scale-95 transition-all shadow-lg hover:shadow-primary/30">Mettre à jour la sécurité</button>
         </div>
